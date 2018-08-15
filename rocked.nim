@@ -86,6 +86,8 @@ echo &"Initialized OpenGL {major}.{minor}"
 
 opengl.loadExtensions()
 
+glEnable(GL_CULL_FACE)
+
 const vert: string = staticRead("shader/vert.glsl")
 var vs = newShader(GL_VERTEX_SHADER, vert)
 
@@ -94,14 +96,16 @@ var fs = newShader(GL_FRAGMENT_SHADER, frag)
 
 var prog = newProgram(@[vs, fs])
 
-var vertexes: array[9, GLfloat] = [
-  -0.5'f32, -0.5'f32, 0.0'f32,
-  0.5'f32, -0.5'f32, 0.0'f32,
-  0.0'f32,  0.5'f32, 0.0'f32
+var vertexes: array[12, GLfloat] = [
+  -192'f32, 384'f32, 0'f32,
+  -128'f32, 384'f32, 0'f32,
+  -128'f32, 384'f32, 128'f32,
+  -192'f32, 384'f32, 128'f32
 ]
 
-var indexes: array[3, GLuint] = [
-  0'u32, 1'u32, 2'u32
+var indexes: array[6, GLuint] = [
+  0'u32, 1'u32, 2'u32,
+  2'u32, 3'u32, 0'u32
 ]
 
 var vao: GLuint
@@ -123,19 +127,33 @@ glEnableVertexAttribArray(0);
 
 glBindVertexArray(0)
 
-#glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+var
+  cameraPos = vec3[GLfloat](0'f32, 0'f32, 48'f32 + 32'f32)
+  cameraTarget = vec3[GLfloat](0'f32, 1'f32, 48'f32 + 32'f32)
+  cameraUp = vec3[GLfloat](0'f32, 0'f32, 1'f32)
+
+var view = glm.lookAt(cameraPos, cameraTarget, cameraUp)
+echo $view
+
+var projection = glm.perspective[GLfloat](glm.radians(90.0), 800.0 / 500.0, 0.1, 1024.0)
+echo $projection
 
 # Render
 glClearColor(0.0, 0.4, 0.4, 1.0)
 glClear(GL_COLOR_BUFFER_BIT)
 
 glUseProgram(prog.GLuint)
+
+var viewLoc = glGetUniformLocation(prog.GLuint, "view")
+glUniformMatrix4fv(viewLoc, 1, GL_FALSE, view.caddr)
+
+var projectionLoc = glGetUniformLocation(prog.GLuint, "projection")
+glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, projection.caddr)
+
 glBindVertexArray(vao)
-glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nil)
+glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nil)
 
 echo "OpenGL Error: " & $ord(glGetError())
-
-#var perspective = glm.perspective(glm.radians(90.0), 800.0 / 500.0, 0.1, 1024.0)
 
 sdl2.glSwapWindow(window)
 

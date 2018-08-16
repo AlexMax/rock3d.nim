@@ -2,6 +2,8 @@ import strformat, strutils
 
 import opengl, glm, sdl2
 
+import level
+
 type Shader = distinct GLuint
 type Program = distinct GLuint
 
@@ -87,6 +89,7 @@ echo &"Initialized OpenGL {major}.{minor}"
 opengl.loadExtensions()
 
 glEnable(GL_CULL_FACE)
+#glPolygonMode( GL_FRONT_AND_BACK, GL_LINE )
 
 const vert: string = staticRead("shader/vert.glsl")
 var vs = newShader(GL_VERTEX_SHADER, vert)
@@ -96,17 +99,33 @@ var fs = newShader(GL_FRAGMENT_SHADER, frag)
 
 var prog = newProgram(@[vs, fs])
 
-var vertexes: array[12, GLfloat] = [
-  -192'f32, 384'f32, 0'f32,
-  -128'f32, 384'f32, 0'f32,
-  -128'f32, 384'f32, 128'f32,
-  -192'f32, 384'f32, 128'f32
-]
+var
+  vertexes: seq[GLfloat] = @[]
+  indexes: seq[GLuint] = @[]
 
-var indexes: array[6, GLuint] = [
-  0'u32, 1'u32, 2'u32,
-  2'u32, 3'u32, 0'u32
-]
+for index, line in level.lines:
+  echo "Line " & $line.v1[] & " -> " & $line.v2[]
+  vertexes.add(float32(line.v1.x))
+  vertexes.add(float32(line.v1.y))
+  vertexes.add(0'f32)
+  vertexes.add(float32(line.v2.x))
+  vertexes.add(float32(line.v2.y))
+  vertexes.add(0'f32)
+  vertexes.add(float32(line.v2.x))
+  vertexes.add(float32(line.v2.y))
+  vertexes.add(128'f32)
+  vertexes.add(float32(line.v1.x))
+  vertexes.add(float32(line.v1.y))
+  vertexes.add(128'f32)
+
+  var vertOffset: uint32 = uint32(index * 4)
+
+  indexes.add(0'u32 + vertOffset)
+  indexes.add(1'u32 + vertOffset)
+  indexes.add(2'u32 + vertOffset)
+  indexes.add(2'u32 + vertOffset)
+  indexes.add(3'u32 + vertOffset)
+  indexes.add(0'u32 + vertOffset)
 
 var vao: GLuint
 glGenVertexArrays(1, addr vao)
@@ -115,12 +134,12 @@ glBindVertexArray(vao)
 var vbo: GLuint
 glGenBuffers(1, addr vbo)
 glBindBuffer(GL_ARRAY_BUFFER, vbo)
-glBufferData(GL_ARRAY_BUFFER, sizeof(vertexes), addr vertexes, GL_STATIC_DRAW)
+glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * len(vertexes), addr vertexes[0], GL_STATIC_DRAW)
 
 var ebo: GLuint
 glGenBuffers(1, addr ebo)
 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo)
-glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indexes), addr indexes, GL_STATIC_DRAW)
+glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * len(indexes), addr indexes[0], GL_STATIC_DRAW)
 
 glVertexAttribPointer(0, 3, cGL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nil)
 glEnableVertexAttribArray(0);
@@ -151,7 +170,7 @@ var projectionLoc = glGetUniformLocation(prog.GLuint, "projection")
 glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, projection.caddr)
 
 glBindVertexArray(vao)
-glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nil)
+glDrawElements(GL_TRIANGLES, len(indexes).GLsizei, GL_UNSIGNED_INT, nil)
 
 echo "OpenGL Error: " & $ord(glGetError())
 

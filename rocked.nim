@@ -104,7 +104,6 @@ var
   indexes: seq[GLuint] = @[]
 
 for index, line in level.lines:
-  echo "Line " & $line.v1[] & " -> " & $line.v2[]
   vertexes.add(float32(line.v1.x))
   vertexes.add(float32(line.v1.y))
   vertexes.add(0'f32)

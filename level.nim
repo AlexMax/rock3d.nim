@@ -43,7 +43,7 @@ var vertexes*: seq[Vertex] = @[
 
 var sectors*: seq[Sector] = @[
   Sector(ceilHeight: 128'i32, floorHeight: 0'i32), # Main room
-  Sector(ceilHeight: 128'i32, floorHeight: 32'i32), # Platform
+  Sector(ceilHeight: 96'i32, floorHeight: 32'i32), # Platform
 ]
 
 var sides*: seq[Side] = @[
@@ -90,7 +90,7 @@ var lines*: seq[Line] = @[
   ), # Western wall
   Line(
     v1: addr vertexes[2],
-    v2: addr vertexes[3],
+    v2: addr vertexes[5],
     front: addr sides[6],
     back: addr sides[7],
   ), # Dividing wall

@@ -88,8 +88,8 @@ echo &"Initialized OpenGL {major}.{minor}"
 
 opengl.loadExtensions()
 
-glEnable(GL_CULL_FACE)
-#glPolygonMode( GL_FRONT_AND_BACK, GL_LINE )
+# glEnable(GL_CULL_FACE)
+glPolygonMode( GL_FRONT_AND_BACK, GL_LINE )
 
 const vert: string = staticRead("shader/vert.glsl")
 var vs = newShader(GL_VERTEX_SHADER, vert)
@@ -104,27 +104,71 @@ var
   indexes: seq[GLuint] = @[]
 
 for index, line in level.lines:
-  vertexes.add(float32(line.v1.x))
-  vertexes.add(float32(line.v1.y))
-  vertexes.add(0'f32)
-  vertexes.add(float32(line.v2.x))
-  vertexes.add(float32(line.v2.y))
-  vertexes.add(0'f32)
-  vertexes.add(float32(line.v2.x))
-  vertexes.add(float32(line.v2.y))
-  vertexes.add(128'f32)
-  vertexes.add(float32(line.v1.x))
-  vertexes.add(float32(line.v1.y))
-  vertexes.add(128'f32)
-
   var vertOffset: uint32 = uint32(index * 4)
 
-  indexes.add(0'u32 + vertOffset)
-  indexes.add(1'u32 + vertOffset)
-  indexes.add(2'u32 + vertOffset)
-  indexes.add(2'u32 + vertOffset)
-  indexes.add(3'u32 + vertOffset)
-  indexes.add(0'u32 + vertOffset)
+  if isNil(line.back):
+    # Single-sided line
+    vertexes.add(line.v1.x.GLfloat)
+    vertexes.add(line.v1.y.GLfloat)
+    vertexes.add(line.front.sector.floorHeight.GLfloat)
+    vertexes.add(line.v2.x.GLfloat)
+    vertexes.add(line.v2.y.GLfloat)
+    vertexes.add(line.front.sector.floorHeight.GLfloat)
+    vertexes.add(line.v2.x.GLfloat)
+    vertexes.add(line.v2.y.GLfloat)
+    vertexes.add(line.front.sector.ceilHeight.GLfloat)
+    vertexes.add(line.v1.x.GLfloat)
+    vertexes.add(line.v1.y.GLfloat)
+    vertexes.add(line.front.sector.ceilHeight.GLfloat)
+
+    indexes.add(0'u32 + vertOffset)
+    indexes.add(1'u32 + vertOffset)
+    indexes.add(2'u32 + vertOffset)
+    indexes.add(2'u32 + vertOffset)
+    indexes.add(3'u32 + vertOffset)
+    indexes.add(0'u32 + vertOffset)
+  else:
+    # Double-sided line, upper wall
+    vertexes.add(line.v1.x.GLfloat)
+    vertexes.add(line.v1.y.GLfloat)
+    vertexes.add(line.back.sector.ceilHeight.GLfloat)
+    vertexes.add(line.v2.x.GLfloat)
+    vertexes.add(line.v2.y.GLfloat)
+    vertexes.add(line.back.sector.ceilHeight.GLfloat)
+    vertexes.add(line.v2.x.GLfloat)
+    vertexes.add(line.v2.y.GLfloat)
+    vertexes.add(line.front.sector.ceilHeight.GLfloat)
+    vertexes.add(line.v1.x.GLfloat)
+    vertexes.add(line.v1.y.GLfloat)
+    vertexes.add(line.front.sector.ceilHeight.GLfloat)
+
+    indexes.add(0'u32 + vertOffset)
+    indexes.add(1'u32 + vertOffset)
+    indexes.add(2'u32 + vertOffset)
+    indexes.add(2'u32 + vertOffset)
+    indexes.add(3'u32 + vertOffset)
+    indexes.add(0'u32 + vertOffset)
+
+    # Double-sided line, lower wall
+    vertexes.add(line.v1.x.GLfloat)
+    vertexes.add(line.v1.y.GLfloat)
+    vertexes.add(line.front.sector.floorHeight.GLfloat)
+    vertexes.add(line.v2.x.GLfloat)
+    vertexes.add(line.v2.y.GLfloat)
+    vertexes.add(line.front.sector.floorHeight.GLfloat)
+    vertexes.add(line.v2.x.GLfloat)
+    vertexes.add(line.v2.y.GLfloat)
+    vertexes.add(line.back.sector.floorHeight.GLfloat)
+    vertexes.add(line.v1.x.GLfloat)
+    vertexes.add(line.v1.y.GLfloat)
+    vertexes.add(line.back.sector.floorHeight.GLfloat)
+
+    indexes.add(0'u32 + vertOffset)
+    indexes.add(1'u32 + vertOffset)
+    indexes.add(2'u32 + vertOffset)
+    indexes.add(2'u32 + vertOffset)
+    indexes.add(3'u32 + vertOffset)
+    indexes.add(0'u32 + vertOffset)
 
 var vao: GLuint
 glGenVertexArrays(1, addr vao)
@@ -149,7 +193,7 @@ for index in countup(0, 360):
   var i: GLfloat = 0.0 + index.GLfloat
   echo $i
 
-  var cam =  Camera(x: 0.0'f32, y: 0.0'f32, z: 48'f32, yaw: glm.radians(i))
+  var cam =  Camera(x: 0.0'f32, y: 448.0'f32, z: 48'f32, yaw: glm.radians(i))
   var view = cam.getViewMatrix
 
   var projection = glm.perspective[GLfloat](glm.radians(90.0), 800.0 / 500.0, 0.1, 1024.0)
@@ -169,8 +213,6 @@ for index in countup(0, 360):
   glBindVertexArray(vao)
   glDrawElements(GL_TRIANGLES, len(indexes).GLsizei, GL_UNSIGNED_INT, nil)
 
-  echo "OpenGL Error: " & $ord(glGetError())
-
   sdl2.glSwapWindow(window)
 
-  sdl2.delay(28)
+  sdl2.delay(16)

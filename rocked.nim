@@ -2,7 +2,7 @@ import strformat, strutils
 
 import opengl, glm, sdl2
 
-import level
+import camera, level
 
 type Shader = distinct GLuint
 type Program = distinct GLuint
@@ -145,34 +145,32 @@ glEnableVertexAttribArray(0);
 
 glBindVertexArray(0)
 
-var
-  cameraPos = vec3[GLfloat](0'f32, 0'f32, 48'f32 + 32'f32)
-  cameraTarget = vec3[GLfloat](0'f32, 1'f32, 48'f32 + 32'f32)
-  cameraUp = vec3[GLfloat](0'f32, 0'f32, 1'f32)
+for index in countup(0, 360):
+  var i: GLfloat = 0.0 + index.GLfloat
+  echo $i
 
-var view = glm.lookAt(cameraPos, cameraTarget, cameraUp)
-echo $view
+  var cam =  Camera(x: 0.0'f32, y: 0.0'f32, z: 48'f32, yaw: glm.radians(i))
+  var view = cam.getViewMatrix
 
-var projection = glm.perspective[GLfloat](glm.radians(90.0), 800.0 / 500.0, 0.1, 1024.0)
-echo $projection
+  var projection = glm.perspective[GLfloat](glm.radians(90.0), 800.0 / 500.0, 0.1, 1024.0)
 
-# Render
-glClearColor(0.0, 0.4, 0.4, 1.0)
-glClear(GL_COLOR_BUFFER_BIT)
+  # Render
+  glClearColor(0.0, 0.4, 0.4, 1.0)
+  glClear(GL_COLOR_BUFFER_BIT)
 
-glUseProgram(prog.GLuint)
+  glUseProgram(prog.GLuint)
 
-var viewLoc = glGetUniformLocation(prog.GLuint, "view")
-glUniformMatrix4fv(viewLoc, 1, GL_FALSE, view.caddr)
+  var viewLoc = glGetUniformLocation(prog.GLuint, "view")
+  glUniformMatrix4fv(viewLoc, 1, GL_FALSE, view.caddr)
 
-var projectionLoc = glGetUniformLocation(prog.GLuint, "projection")
-glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, projection.caddr)
+  var projectionLoc = glGetUniformLocation(prog.GLuint, "projection")
+  glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, projection.caddr)
 
-glBindVertexArray(vao)
-glDrawElements(GL_TRIANGLES, len(indexes).GLsizei, GL_UNSIGNED_INT, nil)
+  glBindVertexArray(vao)
+  glDrawElements(GL_TRIANGLES, len(indexes).GLsizei, GL_UNSIGNED_INT, nil)
 
-echo "OpenGL Error: " & $ord(glGetError())
+  echo "OpenGL Error: " & $ord(glGetError())
 
-sdl2.glSwapWindow(window)
+  sdl2.glSwapWindow(window)
 
-sdl2.delay(3000)
+  sdl2.delay(28)

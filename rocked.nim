@@ -88,7 +88,7 @@ echo &"Initialized OpenGL {major}.{minor}"
 
 opengl.loadExtensions()
 
-# glEnable(GL_CULL_FACE)
+#glEnable(GL_CULL_FACE)
 glPolygonMode( GL_FRONT_AND_BACK, GL_LINE )
 
 const vert: string = staticRead("shader/vert.glsl")
@@ -103,72 +103,55 @@ var
   vertexes: seq[GLfloat] = @[]
   indexes: seq[GLuint] = @[]
 
-for index, line in level.lines:
-  var vertOffset: uint32 = uint32(index * 4)
+proc drawWall(verts: var seq[GLfloat], inds: var seq[GLuint], x1, y1, z1, x2, y2, z2: GLfloat) =
+  ## Draw a wall into the passed vertex and index buffers.
+  ##
+  ## Assuming you want to face the square head-on, xyz1 is the lower-left
+  ## coordinate and xyz2 is the upper-right coordinate.
+  var off = len(verts).GLuint div 3
 
+  verts.add(x1); verts.add(y1); verts.add(z1)
+  verts.add(x2); verts.add(y2); verts.add(z1)
+  verts.add(x2); verts.add(y2); verts.add(z2)
+  verts.add(x1); verts.add(y1); verts.add(z2)
+
+  inds.add(off + 0)
+  inds.add(off + 1)
+  inds.add(off + 2)
+  inds.add(off + 2)
+  inds.add(off + 3)
+  inds.add(off + 0)
+
+for index, line in level.lines:
   if isNil(line.back):
     # Single-sided line
-    vertexes.add(line.v1.x.GLfloat)
-    vertexes.add(line.v1.y.GLfloat)
-    vertexes.add(line.front.sector.floorHeight.GLfloat)
-    vertexes.add(line.v2.x.GLfloat)
-    vertexes.add(line.v2.y.GLfloat)
-    vertexes.add(line.front.sector.floorHeight.GLfloat)
-    vertexes.add(line.v2.x.GLfloat)
-    vertexes.add(line.v2.y.GLfloat)
-    vertexes.add(line.front.sector.ceilHeight.GLfloat)
-    vertexes.add(line.v1.x.GLfloat)
-    vertexes.add(line.v1.y.GLfloat)
-    vertexes.add(line.front.sector.ceilHeight.GLfloat)
-
-    indexes.add(0'u32 + vertOffset)
-    indexes.add(1'u32 + vertOffset)
-    indexes.add(2'u32 + vertOffset)
-    indexes.add(2'u32 + vertOffset)
-    indexes.add(3'u32 + vertOffset)
-    indexes.add(0'u32 + vertOffset)
+    drawWall(vertexes, indexes,
+      line.v1.x.GLfloat, line.v1.y.GLfloat, line.front.sector.floorHeight.GLfloat,
+      line.v2.x.GLfloat, line.v2.y.GLfloat, line.front.sector.ceilHeight.GLfloat)
   else:
     # Double-sided line, upper wall
-    vertexes.add(line.v1.x.GLfloat)
-    vertexes.add(line.v1.y.GLfloat)
-    vertexes.add(line.back.sector.ceilHeight.GLfloat)
-    vertexes.add(line.v2.x.GLfloat)
-    vertexes.add(line.v2.y.GLfloat)
-    vertexes.add(line.back.sector.ceilHeight.GLfloat)
-    vertexes.add(line.v2.x.GLfloat)
-    vertexes.add(line.v2.y.GLfloat)
-    vertexes.add(line.front.sector.ceilHeight.GLfloat)
-    vertexes.add(line.v1.x.GLfloat)
-    vertexes.add(line.v1.y.GLfloat)
-    vertexes.add(line.front.sector.ceilHeight.GLfloat)
-
-    indexes.add(0'u32 + vertOffset)
-    indexes.add(1'u32 + vertOffset)
-    indexes.add(2'u32 + vertOffset)
-    indexes.add(2'u32 + vertOffset)
-    indexes.add(3'u32 + vertOffset)
-    indexes.add(0'u32 + vertOffset)
+    if (line.front.sector.ceilHeight > line.back.sector.ceilHeight):
+      # Draw on the front side of the line
+      drawWall(vertexes, indexes,
+        line.v1.x.GLfloat, line.v1.y.GLfloat, line.back.sector.ceilHeight.GLfloat,
+        line.v2.x.GLfloat, line.v2.y.GLfloat, line.front.sector.ceilHeight.GLfloat)
+    elif (line.back.sector.ceilHeight > line.front.sector.ceilHeight):
+      # Draw on the back side of the line
+      drawWall(vertexes, indexes,
+        line.v2.x.GLfloat, line.v2.y.GLfloat, line.front.sector.ceilHeight.GLfloat,
+        line.v1.x.GLfloat, line.v1.y.GLfloat, line.back.sector.ceilHeight.GLfloat)
 
     # Double-sided line, lower wall
-    vertexes.add(line.v1.x.GLfloat)
-    vertexes.add(line.v1.y.GLfloat)
-    vertexes.add(line.front.sector.floorHeight.GLfloat)
-    vertexes.add(line.v2.x.GLfloat)
-    vertexes.add(line.v2.y.GLfloat)
-    vertexes.add(line.front.sector.floorHeight.GLfloat)
-    vertexes.add(line.v2.x.GLfloat)
-    vertexes.add(line.v2.y.GLfloat)
-    vertexes.add(line.back.sector.floorHeight.GLfloat)
-    vertexes.add(line.v1.x.GLfloat)
-    vertexes.add(line.v1.y.GLfloat)
-    vertexes.add(line.back.sector.floorHeight.GLfloat)
-
-    indexes.add(0'u32 + vertOffset)
-    indexes.add(1'u32 + vertOffset)
-    indexes.add(2'u32 + vertOffset)
-    indexes.add(2'u32 + vertOffset)
-    indexes.add(3'u32 + vertOffset)
-    indexes.add(0'u32 + vertOffset)
+    if (line.front.sector.floorHeight < line.back.sector.floorHeight):
+      # Draw on the front side of the line
+      drawWall(vertexes, indexes,
+        line.v1.x.GLfloat, line.v1.y.GLfloat, line.front.sector.floorHeight.GLfloat,
+        line.v2.x.GLfloat, line.v2.y.GLfloat, line.back.sector.floorHeight.GLfloat)
+    elif (line.back.sector.floorHeight < line.front.sector.floorHeight):
+      # Draw on the back side of the line
+      drawWall(vertexes, indexes,
+        line.v2.x.GLfloat, line.v2.y.GLfloat, line.back.sector.floorHeight.GLfloat,
+        line.v1.x.GLfloat, line.v1.y.GLfloat, line.front.sector.floorHeight.GLfloat)
 
 var vao: GLuint
 glGenVertexArrays(1, addr vao)
@@ -191,7 +174,6 @@ glBindVertexArray(0)
 
 for index in countup(0, 360):
   var i: GLfloat = 0.0 + index.GLfloat
-  echo $i
 
   var cam =  Camera(x: 0.0'f32, y: 448.0'f32, z: 48'f32, yaw: glm.radians(i))
   var view = cam.getViewMatrix

@@ -6,9 +6,6 @@ type
     y*: GLfloat
     z*: GLfloat
     yaw*: GLfloat
-    position: Vec3[GLfloat]
-    target: Vec3[GLfloat]
-    up: Vec3[GLfloat]
 
 proc getViewMatrix*(cam: Camera): Mat4[GLfloat] =
   var cameraMat = glm.lookAt[GLfloat](

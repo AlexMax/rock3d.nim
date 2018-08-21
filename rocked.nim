@@ -2,7 +2,7 @@ import strformat, strutils
 
 import opengl, glm, sdl2
 
-import camera, level
+import atlas, camera, level, texture
 
 type Shader = distinct GLuint
 type Program = distinct GLuint
@@ -171,6 +171,14 @@ glVertexAttribPointer(0, 3, cGL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nil)
 glEnableVertexAttribArray(0);
 
 glBindVertexArray(0)
+
+var wall = texture.loadPNGFile("texture/STARTAN3.png")
+var floor = texture.loadPNGFile("texture/FLOOR4_8.png")
+var ceiling = texture.loadPNGFile("texture/RROCK18.png")
+var textures = atlas.newAtlas(2048)
+textures.add(wall)
+textures.add(floor)
+textures.add(ceiling)
 
 for index in countup(0, 360):
   var i: GLfloat = 0.0 + index.GLfloat

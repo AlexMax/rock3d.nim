@@ -1,4 +1,4 @@
-import tables
+import strformat, tables
 
 import texture
 
@@ -23,7 +23,14 @@ proc newAtlas*(size: uint): Atlas =
   return Atlas(atlas: initTable[string, AtlasEntry](),
     length: size.uint32, shelves: @[])
 
+proc `$`*(atlas: var Atlas): string =
+  var ret = &"Atlas of size {atlas.length}\n"
+  for index, shelf in atlas.shelves:
+    ret &= &"  Shelf {index}: (width {shelf.width} height {shelf.height})"
+  return ret
+
 proc add*(atlas: var Atlas, t: Texture) =
+  echo "Inserting " & t.name
   if t.width > atlas.length or t.height > atlas.length:
     echo "atlas.add: Texture is too big for the atlas"
     quit(QuitFailure)
@@ -38,6 +45,8 @@ proc add*(atlas: var Atlas, t: Texture) =
         atlas.atlas[t.name] = AtlasEntry(texture: t)
         shelf.width += t.width
 
+        return
+
     # No room on this shelf, go to the next...
     y += shelf.height
 
@@ -47,6 +56,8 @@ proc add*(atlas: var Atlas, t: Texture) =
     # We do!  Create the new shelf and put the atlas entry there.
     atlas.shelves.add(AtlasShelf(width: t.width, height: t.height))
     atlas.atlas[t.name] = AtlasEntry(texture: t, xPos: 0, yPos: y)
+
+    return
 
   echo "No space left in texture atlas"
   quit(QuitFailure)

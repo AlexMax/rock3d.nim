@@ -74,23 +74,24 @@ var
 
 discard sdl2.glGetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, major)
 discard sdl2.glGetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, minor)
-discard sdl2.glGetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, profile)
+discard sdl2.glGetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, profile)
 
 if (major == 3 and minor < 3) or (major < 3):
   echo "sdl2.glCreateContext: Couldn't get OpenGL 3.3 context"
   quit(QuitFailure)
 
-#if profile != SDL_GL_CONTEXT_PROFILE_CORE:
-#  echo "sdl2.glCreateContext: Couldn't get core profile"
-#  quit(QuitFailure)
+if profile != SDL_GL_CONTEXT_PROFILE_CORE:
+  echo "sdl2.glCreateContext: Couldn't get core profile"
+  quit(QuitFailure)
 
 echo &"Initialized OpenGL {major}.{minor}"
 
 opengl.loadExtensions()
 
 #glEnable(GL_CULL_FACE)
-glPolygonMode( GL_FRONT_AND_BACK, GL_LINE )
+#glPolygonMode( GL_FRONT_AND_BACK, GL_LINE )
 
+# Put the shader together
 const vert: string = staticRead("shader/vert.glsl")
 var vs = newShader(GL_VERTEX_SHADER, vert)
 
@@ -108,12 +109,16 @@ proc drawWall(verts: var seq[GLfloat], inds: var seq[GLuint], x1, y1, z1, x2, y2
   ##
   ## Assuming you want to face the square head-on, xyz1 is the lower-left
   ## coordinate and xyz2 is the upper-right coordinate.
-  var off = len(verts).GLuint div 3
+  var off = len(verts).GLuint div 5
 
   verts.add(x1); verts.add(y1); verts.add(z1)
+  verts.add(0.0); verts.add(1.0)
   verts.add(x2); verts.add(y2); verts.add(z1)
+  verts.add(1.0); verts.add(1.0)
   verts.add(x2); verts.add(y2); verts.add(z2)
+  verts.add(1.0); verts.add(0.0)
   verts.add(x1); verts.add(y1); verts.add(z2)
+  verts.add(0.0); verts.add(0.0)
 
   inds.add(off + 0)
   inds.add(off + 1)
@@ -167,8 +172,10 @@ glGenBuffers(1, addr ebo)
 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo)
 glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * len(indexes), addr indexes[0], GL_STATIC_DRAW)
 
-glVertexAttribPointer(0, 3, cGL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nil)
+glVertexAttribPointer(0, 3, cGL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), cast[pointer](0))
 glEnableVertexAttribArray(0);
+glVertexAttribPointer(1, 2, cGL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), cast[pointer](3 * sizeof(GLfloat)))
+glEnableVertexAttribArray(1);
 
 glBindVertexArray(0)
 
@@ -179,6 +186,31 @@ var textures = atlas.newAtlas(2048)
 textures.add(wall)
 textures.add(floor)
 textures.add(ceiling)
+
+echo $textures
+
+var texAtlas: GLuint;
+glGenTextures(1, addr texAtlas)
+
+var myTex: array[4 * 9, GLubyte] = [
+    255'u8, 0'u8, 0'u8, 255'u8, 0'u8, 0'u8, 0'u8, 255'u8, 0'u8, 255'u8, 0'u8, 255'u8,
+    0'u8, 0'u8, 0'u8, 255'u8, 0'u8, 0'u8, 0'u8, 255'u8, 0'u8, 0'u8, 0'u8, 255'u8,
+    0'u8, 0'u8, 255'u8, 255'u8, 0'u8, 0'u8, 0'u8, 255'u8, 0'u8, 0'u8, 0'u8, 255'u8
+]
+
+# Upload a blank texture that we can use to apply our atlas to
+glBindTexture(GL_TEXTURE_2D, texAtlas)
+
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+
+glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA.GLint, 3, 3, 0, GL_RGBA, GL_UNSIGNED_BYTE, addr myTex[0])
+
+glUseProgram(prog.GLuint)
+var textureLoc = glGetUniformLocation(prog.GLuint, "uTexture")
+glUniform1i(textureLoc, 0);
 
 for index in countup(0, 360):
   var i: GLfloat = 0.0 + index.GLfloat
@@ -194,11 +226,14 @@ for index in countup(0, 360):
 
   glUseProgram(prog.GLuint)
 
-  var viewLoc = glGetUniformLocation(prog.GLuint, "view")
+  var viewLoc = glGetUniformLocation(prog.GLuint, "uView")
   glUniformMatrix4fv(viewLoc, 1, GL_FALSE, view.caddr)
 
-  var projectionLoc = glGetUniformLocation(prog.GLuint, "projection")
+  var projectionLoc = glGetUniformLocation(prog.GLuint, "uProjection")
   glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, projection.caddr)
+
+  glActiveTexture(GL_TEXTURE0)
+  glBindTexture(GL_TEXTURE_2D, texAtlas)
 
   glBindVertexArray(vao)
   glDrawElements(GL_TRIANGLES, len(indexes).GLsizei, GL_UNSIGNED_INT, nil)

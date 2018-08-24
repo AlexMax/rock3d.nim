@@ -4,15 +4,15 @@ import texture
 
 type
   AtlasEntry = object
-    texture: Texture
-    xPos: uint32
-    yPos: uint32
+    texture*: Texture
+    xPos*: uint32
+    yPos*: uint32
   AtlasShelf = object
     width*: uint32
     height*: uint32
   Atlas = object
     atlas: Table[string, AtlasEntry] ## The actual texture atlas
-    length: uint32 ## Length of one side of the texture atlas - it's square
+    length*: uint32 ## Length of one side of the texture atlas - it's square
     shelves: seq[AtlasShelf]
 
 proc newAtlas*(size: uint): Atlas =
@@ -72,3 +72,7 @@ proc persist*(atlas: var Atlas, p: PersistProc) =
   ## Persist the atlas onto the GPU
   for tex in atlas.atlas.mvalues:
     p(addr tex.texture.data[0], tex.xPos, tex.yPos, tex.texture.width, tex.texture.height)
+
+proc find*(atlas: Atlas, name: string):AtlasEntry =
+  ## Find and return the atlas entry given the name
+  return atlas.atlas[name]

@@ -100,25 +100,60 @@ var fs = newShader(GL_FRAGMENT_SHADER, frag)
 
 var prog = newProgram(@[vs, fs])
 
+# Assemble the texture atlas so we know which texture coordinates
+# to point our vertex generator towards
+const atlasSize = 512
+
+var wall = texture.loadPNGFile("texture/STARTAN3.png")
+var floor = texture.loadPNGFile("texture/FLOOR4_8.png")
+var ceiling = texture.loadPNGFile("texture/RROCK18.png")
+var textures = atlas.newAtlas(atlasSize)
+textures.add(wall)
+textures.add(floor)
+textures.add(ceiling)
+
+type
+  Vertex = object
+    x: GLfloat
+    y: GLfloat
+    z: GLfloat
+    uAtlas: GLfloat
+    vAtlas: GLfloat
+    uTex: GLfloat
+    vTex: GLfloat
+## A vertex currently consists of its location in space and some texture
+## coordinates.
+##
+## The atlas coordinates are used to select the proper texture out of the
+## atlas.  The tex coordinates are relative to the actual texture itself,
+## ignoring its position in the atlas.
+
 var
-  vertexes: seq[GLfloat] = @[]
+  vertexes: seq[Vertex] = @[]
   indexes: seq[GLuint] = @[]
 
-proc drawWall(verts: var seq[GLfloat], inds: var seq[GLuint], x1, y1, z1, x2, y2, z2: GLfloat) =
+proc drawWall(verts: var seq[Vertex], inds: var seq[GLuint], x1, y1, z1, x2, y2, z2: GLfloat) =
+  # Find the texture of the wall in the atlas
+  var texEntry = textures.find("STARTAN3")
+  var ua1 = texEntry.xPos.GLfloat / textures.length.GLfloat
+  var va1 = texEntry.yPos.GLfloat / textures.length.GLfloat
+  var ua2 = GLfloat(texEntry.xPos + texEntry.texture.width) / textures.length.GLfloat
+  var va2 = GLfloat(texEntry.yPos + texEntry.texture.height) / textures.length.GLfloat
+
   ## Draw a wall into the passed vertex and index buffers.
   ##
   ## Assuming you want to face the square head-on, xyz1 is the lower-left
   ## coordinate and xyz2 is the upper-right coordinate.
-  var off = len(verts).GLuint div 5
+  var off = len(verts).GLuint
 
-  verts.add(x1); verts.add(y1); verts.add(z1)
-  verts.add(0.0); verts.add(1.0)
-  verts.add(x2); verts.add(y2); verts.add(z1)
-  verts.add(1.0); verts.add(1.0)
-  verts.add(x2); verts.add(y2); verts.add(z2)
-  verts.add(1.0); verts.add(0.0)
-  verts.add(x1); verts.add(y1); verts.add(z2)
-  verts.add(0.0); verts.add(0.0)
+  verts.add(Vertex(x: x1, y: y1, z: z1,
+    uAtlas: ua1, vAtlas: va2, uTex: 0.0, vTex: 1.0))
+  verts.add(Vertex(x: x2, y: y2, z: z1,
+    uAtlas: ua2, vAtlas: va2, uTex: 1.0, vTex: 1.0))
+  verts.add(Vertex(x: x2, y: y2, z: z2,
+    uAtlas: ua2, vAtlas: va1, uTex: 1.0, vTex: 0.0))
+  verts.add(Vertex(x: x1, y: y1, z: z2,
+    uAtlas: ua1, vAtlas: va1, uTex: 0.0, vTex: 0.0))
 
   inds.add(off + 0)
   inds.add(off + 1)
@@ -165,29 +200,21 @@ glBindVertexArray(vao)
 var vbo: GLuint
 glGenBuffers(1, addr vbo)
 glBindBuffer(GL_ARRAY_BUFFER, vbo)
-glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * len(vertexes), addr vertexes[0], GL_STATIC_DRAW)
+glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 7 * len(vertexes), addr vertexes[0], GL_STATIC_DRAW)
 
 var ebo: GLuint
 glGenBuffers(1, addr ebo)
 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo)
 glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * len(indexes), addr indexes[0], GL_STATIC_DRAW)
 
-glVertexAttribPointer(0, 3, cGL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), cast[pointer](0))
+glVertexAttribPointer(0, 3, cGL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), cast[pointer](0))
 glEnableVertexAttribArray(0);
-glVertexAttribPointer(1, 2, cGL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), cast[pointer](3 * sizeof(GLfloat)))
+glVertexAttribPointer(1, 2, cGL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), cast[pointer](3 * sizeof(GLfloat)))
 glEnableVertexAttribArray(1);
+glVertexAttribPointer(2, 2, cGL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), cast[pointer](5 * sizeof(GLfloat)))
+glEnableVertexAttribArray(2);
 
 glBindVertexArray(0)
-
-const atlasSize = 512
-
-var wall = texture.loadPNGFile("texture/STARTAN3.png")
-var floor = texture.loadPNGFile("texture/FLOOR4_8.png")
-var ceiling = texture.loadPNGFile("texture/RROCK18.png")
-var textures = atlas.newAtlas(atlasSize)
-textures.add(wall)
-textures.add(floor)
-textures.add(ceiling)
 
 echo $textures
 

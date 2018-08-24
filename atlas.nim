@@ -7,13 +7,9 @@ type
     texture: Texture
     xPos: uint32
     yPos: uint32
-
-type
   AtlasShelf = object
     width*: uint32
     height*: uint32
-
-type
   Atlas = object
     atlas: Table[string, AtlasEntry] ## The actual texture atlas
     length: uint32 ## Length of one side of the texture atlas - it's square
@@ -42,7 +38,7 @@ proc add*(atlas: var Atlas, t: Texture) =
       # Is there space on the shelf?
       if (t.width <= atlas.length - shelf.width):
         # There is!  Put the altas entry there, then adjust the shelf.
-        atlas.atlas[t.name] = AtlasEntry(texture: t)
+        atlas.atlas[t.name] = AtlasEntry(texture: t, xPos: shelf.width, yPos: y)
         shelf.width += t.width
 
         return
@@ -61,3 +57,18 @@ proc add*(atlas: var Atlas, t: Texture) =
 
   echo "No space left in texture atlas"
   quit(QuitFailure)
+
+type PersistProc* = proc(data: pointer, x, y, w, h: uint32)
+## A proc used by persist that is called once for every texture to be inserted
+## into the GPU
+##
+## data is an opaque pointer to the image data in RGBA format.
+## x is the x position in the atlas where the image belongs.
+## y is the y position in the atlas where the image belongs.
+## w is the width of the image.
+## h is the height of the image.
+
+proc persist*(atlas: var Atlas, p: PersistProc) =
+  ## Persist the atlas onto the GPU
+  for tex in atlas.atlas.mvalues:
+    p(addr tex.texture.data[0], tex.xPos, tex.yPos, tex.texture.width, tex.texture.height)

@@ -179,10 +179,12 @@ glEnableVertexAttribArray(1);
 
 glBindVertexArray(0)
 
+const atlasSize = 512
+
 var wall = texture.loadPNGFile("texture/STARTAN3.png")
 var floor = texture.loadPNGFile("texture/FLOOR4_8.png")
 var ceiling = texture.loadPNGFile("texture/RROCK18.png")
-var textures = atlas.newAtlas(2048)
+var textures = atlas.newAtlas(atlasSize)
 textures.add(wall)
 textures.add(floor)
 textures.add(ceiling)
@@ -192,13 +194,14 @@ echo $textures
 var texAtlas: GLuint;
 glGenTextures(1, addr texAtlas)
 
-var myTex: array[4 * 9, GLubyte] = [
-    255'u8, 0'u8, 0'u8, 255'u8, 0'u8, 0'u8, 0'u8, 255'u8, 0'u8, 255'u8, 0'u8, 255'u8,
-    0'u8, 0'u8, 0'u8, 255'u8, 0'u8, 0'u8, 0'u8, 255'u8, 0'u8, 0'u8, 0'u8, 255'u8,
-    0'u8, 0'u8, 255'u8, 255'u8, 0'u8, 0'u8, 0'u8, 255'u8, 0'u8, 0'u8, 0'u8, 255'u8
-]
-
 # Upload a blank texture that we can use to apply our atlas to
+var blankAtlasTex: array[atlasSize * atlasSize * 4, GLubyte]
+for i in countup(0, blankAtlasTex.len - 1, 4):
+  blankAtlasTex[i] = 255;
+  blankAtlasTex[i + 1] = 0;
+  blankAtlasTex[i + 2] = 255;
+  blankAtlasTex[i + 3] = 255;
+
 glBindTexture(GL_TEXTURE_2D, texAtlas)
 
 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
@@ -206,11 +209,16 @@ glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
 
-glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA.GLint, 3, 3, 0, GL_RGBA, GL_UNSIGNED_BYTE, addr myTex[0])
+glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA.GLint, atlasSize, atlasSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, addr blankAtlasTex[0])
 
 glUseProgram(prog.GLuint)
 var textureLoc = glGetUniformLocation(prog.GLuint, "uTexture")
 glUniform1i(textureLoc, 0);
+
+# Get the texture atlas onto the GPU
+persist(textures, proc (data: pointer, x, y, w, h: uint32) =
+  glTexSubImage2D(GL_TEXTURE_2D, 0, x.GLint, y.GLint, w.GLint, h.GLint, GL_RGBA, GL_UNSIGNED_BYTE, data)
+)
 
 for index in countup(0, 360):
   var i: GLfloat = 0.0 + index.GLfloat

@@ -1,3 +1,5 @@
+rock3d
+rocked
 *.dll
 *.exe
-/nimcache/
+nimcache/

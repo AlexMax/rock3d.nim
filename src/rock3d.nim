@@ -1,4 +1,4 @@
-# rocked.nims
+# rock3d.nim
 # (C) 2018 Alex Mayfield <alexmax2742@gmail.com>
 #
 # This software is provided 'as-is', without any express or implied
@@ -16,6 +16,3 @@
 # 2. Altered source versions must be plainly marked as such, and must not be
 #    misrepresented as being the original software.
 # 3. This notice may not be removed or altered from any source distribution.
-
-task build, "builds the editor":
-  setCommand "c"

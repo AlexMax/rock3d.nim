@@ -29,7 +29,7 @@ type
   AtlasShelf = object
     width*: uint32
     height*: uint32
-  Atlas = object
+  Atlas* = object
     atlas: Table[string, AtlasEntry] ## The actual texture atlas
     length*: uint32 ## Length of one side of the texture atlas - it's square
     shelves: seq[AtlasShelf]

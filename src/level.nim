@@ -32,7 +32,7 @@ type
     floorHeight*: int32
 
 type
-  Side = object
+  Side* = object
     ## One side of a wall or border.
     sector*: ptr Sector
 

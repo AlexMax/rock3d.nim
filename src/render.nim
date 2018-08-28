@@ -175,6 +175,8 @@ proc newRenderContext*(): RenderContext =
   #glEnable(GL_CULL_FACE)
   #glPolygonMode( GL_FRONT_AND_BACK, GL_LINE )
 
+  glEnable(GL_DEPTH_TEST)
+
   ctx.initWorldRenderer()
 
   ctx.setProject(90.0)
@@ -233,7 +235,7 @@ proc render*(ctx: var RenderContext, cam: Camera) =
 
   # Clear the buffer
   glClearColor(0.0, 0.4, 0.4, 1.0)
-  glClear(GL_COLOR_BUFFER_BIT)
+  glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
 
   # Use the world program
   glUseProgram(ctx.worldProg.GLuint)

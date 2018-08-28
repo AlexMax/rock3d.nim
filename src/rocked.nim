@@ -21,7 +21,7 @@ import strformat
 
 import glm, sdl2, texture
 
-import atlas, camera, level, render
+import actor, atlas, level, render
 
 const ATLAS_SIZE = 512
 
@@ -113,14 +113,39 @@ for index, line in level.lines:
         line.v2.x.float32, line.v2.y.float32, line.back.sector.floorHeight.float32,
         line.v1.x.float32, line.v1.y.float32, line.front.sector.floorHeight.float32)
 
-# Actually render the world
-for index in countup(0, 360):
-  var i: float = 0.0 + index.float
+# Create a camera actor
+var cam = Actor(
+  pos: vec3[float](0, 448, 0),
+  yaw: glm.radians(0.0),
+  viewHeight: 48
+)
 
-  var cam =  Camera(x: 0.0'f32, y: 448.0'f32, z: 48'f32, yaw: glm.radians(i))
+# Actually render the world
+while true:
+  var event: sdl2.Event
+  while sdl2.pollEvent(event) != SdlError:
+    case event.kind:
+      of KeyDown:
+        # We deal in scancodes for now
+        case event.key.keysym.scancode:
+          of SDL_SCANCODE_W:
+            cam.move(8.0)
+          of SDL_SCANCODE_S:
+            cam.move(-8.0)
+          of SDL_SCANCODE_A:
+            cam.yaw -= 0.1
+          of SDL_SCANCODE_D:
+            cam.yaw += 0.1
+          else:
+            echo "do nothing"
+        
+      of QuitEvent:
+        quit(QuitSuccess)
+      else:
+        echo "Unhandled " & $event
 
   # Render the world from the camera's perspective
-  renderer.render(cam)
+  renderer.render(cam.getCamera)
 
   sdl2.glSwapWindow(window)
 

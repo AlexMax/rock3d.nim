@@ -1,4 +1,4 @@
-# camera.nim
+# actor.nim
 # (C) 2018 Alex Mayfield <alexmax2742@gmail.com>
 #
 # This software is provided 'as-is', without any express or implied
@@ -17,20 +17,21 @@
 #    misrepresented as being the original software.
 # 3. This notice may not be removed or altered from any source distribution.
 
-import glm, opengl
+import glm
+
+import camera
 
 type
-  Camera* = object
+  Actor* = object
     pos*: Vec3[float]
     yaw*: float
+    viewHeight*: int
 
-proc getViewMatrix*(cam: Camera): Mat4[GLfloat] =
-  # Get a view matrix for looking through the Actor's eyes
-  var cameraMat = glm.lookAt[GLfloat](
-    vec3[GLfloat](0, 0, 0), # Position
-    vec3[GLfloat](0, 1, 0), # Target
-    vec3[GLfloat](0, 0, 1), # Up
-  )
-  cameraMat = glm.rotateZ(cameraMat, cam.yaw)
-  cameraMat = glm.translate(cameraMat, vec3[GLfloat](-cam.pos.x, -cam.pos.y, -cam.pos.z))
-  return cameraMat
+proc move*(act: var Actor, vel: float) =
+  act.pos.x += glm.sin(act.yaw) * vel
+  act.pos.y += glm.cos(act.yaw) * vel
+
+proc getCamera*(act: var Actor): Camera =
+  var cam = Camera(pos: act.pos, yaw: act.yaw)
+  cam.pos.z += act.viewHeight.float
+  return cam

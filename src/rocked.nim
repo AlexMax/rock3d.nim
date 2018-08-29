@@ -120,6 +120,8 @@ var cam = Actor(
   viewHeight: 48
 )
 
+discard sdl2.setRelativeMouseMode(true.Bool32)
+
 # Actually render the world
 while true:
   var event: sdl2.Event
@@ -130,19 +132,29 @@ while true:
         case event.key.keysym.scancode:
           of SDL_SCANCODE_W:
             cam.move(8.0)
+            echo $cam
           of SDL_SCANCODE_S:
             cam.move(-8.0)
+            echo $cam
           of SDL_SCANCODE_A:
-            cam.yaw -= 0.1
+            cam.strafe(-8.0)
+            echo $cam
           of SDL_SCANCODE_D:
-            cam.yaw += 0.1
+            cam.strafe(8.0)
+            echo $cam
+          of SDL_SCANCODE_ESCAPE:
+            quit(QuitSuccess)
           else:
             echo "do nothing"
-        
+      of MouseMotion:
+        echo $event.motion.xrel
+        var oneDeg = (2.0 * PI) / 360.0
+        cam.yaw += event.motion.xrel.float * (oneDeg * 0.5)
       of QuitEvent:
         quit(QuitSuccess)
       else:
-        echo "Unhandled " & $event
+        discard
+        #echo "Unhandled " & $event
 
   # Render the world from the camera's perspective
   renderer.render(cam.getCamera)

@@ -17,6 +17,8 @@
 #    misrepresented as being the original software.
 # 3. This notice may not be removed or altered from any source distribution.
 
+import strformat
+
 import glm
 
 import camera
@@ -27,9 +29,20 @@ type
     yaw*: float
     viewHeight*: int
 
+proc `$`*(act: Actor): string =
+  var yaw = glm.degrees(act.yaw)
+  return &"x: {act.pos.x}, y: {act.pos.y}, z: {act.pos.z}, yaw: {yaw}"
+
 proc move*(act: var Actor, vel: float) =
-  act.pos.x += glm.sin(act.yaw) * vel
-  act.pos.y += glm.cos(act.yaw) * vel
+  # Move the actor forwards or backwards
+  act.pos.x += sin(act.yaw) * vel
+  act.pos.y += cos(act.yaw) * vel
+
+proc strafe*(act: var Actor, vel: float) =
+  # Move the actor side to side
+  var angle90 = PI / 2.0
+  act.pos.x += sin(act.yaw + angle90) * vel
+  act.pos.y += cos(act.yaw + angle90) * vel
 
 proc getCamera*(act: var Actor): Camera =
   var cam = Camera(pos: act.pos, yaw: act.yaw)

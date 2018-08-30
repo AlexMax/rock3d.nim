@@ -75,8 +75,10 @@ type
     x: GLfloat
     y: GLfloat
     z: GLfloat
-    uAtlas: GLfloat
-    vAtlas: GLfloat
+    uAtOrigin: GLfloat
+    vAtOrigin: GLfloat
+    uAtLen: GLfloat
+    vAtLen: GLfloat
     uTex: GLfloat
     vTex: GLfloat
   RenderContext = object
@@ -123,13 +125,13 @@ proc initWorldRenderer(ctx: var RenderContext) =
 
   # Layout of our vertexes, as passed to the vertex shader.
   # x, y, and z positions.
-  glVertexAttribPointer(0, 3, cGL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), cast[pointer](0))
+  glVertexAttribPointer(0, 3, cGL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), cast[pointer](0))
   glEnableVertexAttribArray(0);
   # u and v texture coordinates for the texture atlas.
-  glVertexAttribPointer(1, 2, cGL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), cast[pointer](3 * sizeof(GLfloat)))
+  glVertexAttribPointer(1, 4, cGL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), cast[pointer](3 * sizeof(GLfloat)))
   glEnableVertexAttribArray(1);
   # u and v texture coordinates for the texture itself.
-  glVertexAttribPointer(2, 2, cGL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), cast[pointer](5 * sizeof(GLfloat)))
+  glVertexAttribPointer(2, 2, cGL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), cast[pointer](7 * sizeof(GLfloat)))
   glEnableVertexAttribArray(2);
 
   # Unbind the array so we don't change it on accident
@@ -199,6 +201,14 @@ proc addWall*(ctx: var RenderContext, x1, y1, z1, x2, y2, z2: float32) =
   var ua2 = GLfloat(texEntry.xPos + texEntry.texture.width) / ctx.worldAtlas.length.GLfloat
   var va2 = GLfloat(texEntry.yPos + texEntry.texture.height) / ctx.worldAtlas.length.GLfloat
 
+  var hDist = glm.length(vec2(x1, y1) - vec2(x2, y2))
+  var vDist = z2 - z1
+
+  var ut1 = 0.0
+  var vt1 = 0.0
+  var ut2 = hDist / texEntry.texture.width.float32
+  var vt2 = vDist / texEntry.texture.height.float32
+
   ## Draw a wall into the vertex and index buffers.
   ##
   ## Assuming you want to face the square head-on, xyz1 is the lower-left
@@ -206,13 +216,17 @@ proc addWall*(ctx: var RenderContext, x1, y1, z1, x2, y2, z2: float32) =
   var off = len(ctx.worldVerts).GLuint
 
   ctx.worldVerts.add(Vertex(x: x1.GLfloat, y: y1.GLfloat, z: z1.GLfloat,
-    uAtlas: ua1, vAtlas: va2, uTex: 0.0, vTex: 1.0))
+    uAtOrigin: ua1, vAtOrigin: va1, uAtLen: ua2 - ua1, vAtLen: va2 - va1,
+    uTex: ut1, vTex: vt2))
   ctx.worldVerts.add(Vertex(x: x2.GLfloat, y: y2.GLfloat, z: z1.GLfloat,
-    uAtlas: ua2, vAtlas: va2, uTex: 1.0, vTex: 1.0))
+    uAtOrigin: ua1, vAtOrigin: va1, uAtLen: ua2 - ua1, vAtLen: va2 - va1,
+    uTex: ut2, vTex: vt2))
   ctx.worldVerts.add(Vertex(x: x2.GLfloat, y: y2.GLfloat, z: z2.GLfloat,
-    uAtlas: ua2, vAtlas: va1, uTex: 1.0, vTex: 0.0))
+    uAtOrigin: ua1, vAtOrigin: va1, uAtLen: ua2 - ua1, vAtLen: va2 - va1,
+    uTex: ut2, vTex: vt1))
   ctx.worldVerts.add(Vertex(x: x1.GLfloat, y: y1.GLfloat, z: z2.GLfloat,
-    uAtlas: ua1, vAtlas: va1, uTex: 0.0, vTex: 0.0))
+    uAtOrigin: ua1, vAtOrigin: va1, uAtLen: ua2 - ua1, vAtLen: va2 - va1,
+    uTex: ut1, vTex: vt1))
 
   ctx.worldInds.add(off + 0)
   ctx.worldInds.add(off + 1)
@@ -252,7 +266,7 @@ proc render*(ctx: var RenderContext, cam: Camera) =
   # Load our data into the VAO
   glBindVertexArray(ctx.worldVAO)
 
-  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 7 * len(ctx.worldVerts), addr ctx.worldVerts[0], GL_STATIC_DRAW)
+  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 9 * len(ctx.worldVerts), addr ctx.worldVerts[0], GL_STATIC_DRAW)
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * len(ctx.worldInds), addr ctx.worldInds[0], GL_STATIC_DRAW)
 
   # Draw everything

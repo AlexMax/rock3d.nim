@@ -23,11 +23,33 @@
 
 uniform sampler2D uTexture;
 
+in vec4 fAtlasInfo;
 in vec2 fTexCoord;
 
 out vec4 fragColor;
 
+float wrap(float coord, float origin, float len)
+{
+    // Scale the fragment up to a 0.0 through 1.0 range
+    float x = (coord - origin) / len;
+
+    // Get the fractional part
+    x = fract(x);
+
+    // Scale the fragment back down to its original range
+    return (x * len) + origin;
+}
+
 void main()
 {
-    fragColor = texture(uTexture, fTexCoord);
+    float uAtOrigin = fAtlasInfo.x;
+    float vAtOrigin = fAtlasInfo.y;
+    float uAtLen = fAtlasInfo.z;
+    float vAtLen = fAtlasInfo.w;
+
+    vec2 texCord;
+    texCord.x = wrap(fTexCoord.x, uAtOrigin, uAtLen);
+    texCord.y = wrap(fTexCoord.y, vAtOrigin, vAtLen);
+
+    fragColor = texture(uTexture, texCord);
 }

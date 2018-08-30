@@ -30,14 +30,7 @@ out vec4 fragColor;
 
 float wrap(float coord, float origin, float len)
 {
-    // Scale the fragment up to a 0.0 through 1.0 range
-    float x = (coord - origin) / len;
-
-    // Get the fractional part
-    x = fract(x);
-
-    // Scale the fragment back down to its original range
-    return (x * len) + origin;
+    return mod(coord - origin, len) + origin;
 }
 
 void main()

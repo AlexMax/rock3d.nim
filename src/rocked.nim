@@ -82,7 +82,7 @@ textures.add(ceiling)
 renderer.bakeAtlas(textures)
 
 # This should probably be a function...
-for index, line in level.lines:
+for index, line in level.demo.lines:
   if isNil(line.back):
     # Single-sided line
     renderer.addWall(
@@ -132,22 +132,17 @@ while true:
         case event.key.keysym.scancode:
           of SDL_SCANCODE_W:
             cam.move(8.0)
-            echo $cam
           of SDL_SCANCODE_S:
             cam.move(-8.0)
-            echo $cam
           of SDL_SCANCODE_A:
             cam.strafe(-8.0)
-            echo $cam
           of SDL_SCANCODE_D:
             cam.strafe(8.0)
-            echo $cam
           of SDL_SCANCODE_ESCAPE:
             quit(QuitSuccess)
           else:
             echo "do nothing"
       of MouseMotion:
-        echo $event.motion.xrel
         var oneDeg = (2.0 * PI) / 360.0
         cam.yaw += event.motion.xrel.float * (oneDeg * 0.5)
       of QuitEvent:

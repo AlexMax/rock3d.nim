@@ -101,17 +101,42 @@ proc addLine*(level: var Level, v1No, v2No, frontNo: int, backNo = -1) =
 
 var demo* = newLevel()
 
+# First Room
+
 demo.addVertex(x = -256'i32, y = 512'i32) # Upper-left corner, going clockwise
-demo.addVertex(x = 256'i32, y = 512'i32)
+demo.addVertex(x = -64'i32, y = 512'i32)
+demo.addVertex(x = 64'i32, y = 512'i32)
+demo.addVertex(x = 256'i32, y = 512'i32) # Upper-right corner
 demo.addVertex(x = 256'i32, y = 64'i32)
 demo.addVertex(x = 256'i32, y = -64'i32) # Lower-right corner
 demo.addVertex(x = -256'i32, y = -64'i32)
 demo.addVertex(x = -256'i32, y = 64'i32)
 
+# Hallway
+
+demo.addVertex(x = -64'i32, y = 768'i32) # Index 8
+demo.addVertex(x = 192'i32, y = 768'i32)
+demo.addVertex(x = 192'i32, y = 896'i32)
+demo.addVertex(x = 320'i32, y = 896'i32)
+demo.addVertex(x = 320'i32, y = 768'i32)
+demo.addVertex(x = 448'i32, y = 768'i32)
+demo.addVertex(x = 448'i32, y = 640'i32)
+demo.addVertex(x = 64'i32, y = 640'i32)
+
+# First Room
+
 demo.addSector(ceilHeight = 128'i32, floorHeight = 0'i32) # Main room
 demo.addSector(ceilHeight = 96'i32, floorHeight = 32'i32) # Platform
 
-demo.addSide(secNo = 0) # Northern wall
+# Hallway
+
+demo.addSector(ceilHeight = 96'i32, floorHeight = 32'i32) # Index 2
+
+# First Room
+
+demo.addSide(secNo = 0) # Northern walls
+demo.addSide(secNo = 0)
+demo.addSide(secNo = 0)
 demo.addSide(secNo = 0) # Eastern walls
 demo.addSide(secNo = 1)
 demo.addSide(secNo = 1) # Southern wall
@@ -120,10 +145,39 @@ demo.addSide(secNo = 0)
 demo.addSide(secNo = 0) # Dividing wall
 demo.addSide(secNo = 1)
 
-demo.addLine(v1No = 0, v2No = 1, frontNo = 0) # Northern wall
-demo.addLine(v1No = 1, v2No = 2, frontNo = 1) # Eastern wall
-demo.addLine(v1No = 2, v2No = 3, frontNo = 2) # Eastern wall
-demo.addLine(v1No = 3, v2No = 4, frontNo = 3) # Southern wall
-demo.addLine(v1No = 4, v2No = 5, frontNo = 4) # Western wall
-demo.addLine(v1No = 5, v2No = 0, frontNo = 5) # Western wall
-demo.addLine(v1No = 2, v2No = 5, frontNo = 6, backNo = 7) # Dividing wall
+# Hallway
+
+demo.addSide(secNo = 2) # Index 10, starting at the left wall
+demo.addSide(secNo = 2)
+demo.addSide(secNo = 2)
+demo.addSide(secNo = 2)
+demo.addSide(secNo = 2)
+demo.addSide(secNo = 2)
+demo.addSide(secNo = 2)
+demo.addSide(secNo = 2)
+demo.addSide(secNo = 2)
+demo.addSide(secNo = 2) # Shared side with starting room
+
+# First Room
+
+demo.addLine(v1No = 0, v2No = 1, frontNo = 0) # Northern walls
+demo.addLine(v1No = 1, v2No = 2, frontNo = 1, backNo = 19) # Dividing wall
+demo.addLine(v1No = 2, v2No = 3, frontNo = 2)
+demo.addLine(v1No = 3, v2No = 4, frontNo = 3) # Eastern walls
+demo.addLine(v1No = 4, v2No = 5, frontNo = 4)
+demo.addLine(v1No = 5, v2No = 6, frontNo = 5) # Southern wall
+demo.addLine(v1No = 6, v2No = 7, frontNo = 6) # Western walls
+demo.addLine(v1No = 7, v2No = 0, frontNo = 7)
+demo.addLine(v1No = 4, v2No = 7, frontNo = 8, backNo = 9) # Dividing wall
+
+# Hallway
+
+demo.addLine(v1No = 1, v2No = 8, frontNo = 10)
+demo.addLine(v1No = 8, v2No = 9, frontNo = 11)
+demo.addLine(v1No = 9, v2No = 10, frontNo = 12)
+demo.addLine(v1No = 10, v2No = 11, frontNo = 13)
+demo.addLine(v1No = 11, v2No = 12, frontNo = 14)
+demo.addLine(v1No = 12, v2No = 13, frontNo = 15)
+demo.addLine(v1No = 13, v2No = 14, frontNo = 16)
+demo.addLine(v1No = 14, v2No = 15, frontNo = 17)
+demo.addLine(v1No = 15, v2No = 2, frontNo = 18)

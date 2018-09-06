@@ -186,13 +186,13 @@ proc newRenderContext*(): RenderContext =
   return ctx
 
 proc addWall*(ctx: var RenderContext, x1, y1, z1, x2, y2, z2: float32) =
-  # Add a wall to the set of things to render
-  #
-  # Note that we need a working texture atlas at this point, otherwise we
-  # have no clue what the texture coordinates need to be.
-  #
-  # ...not that it matters because we're rendering STARTAN3 BABY, ALL DAY
-  # EVERY DAY FOREVER AND EVER!
+  ## Add a wall to the set of things to render
+  ##
+  ## Note that we need a working texture atlas at this point, otherwise
+  ## we have no clue what the texture coordinates need to be.
+  ##
+  ## ...not that it matters because we're rendering STARTAN3 BABY, ALL DAY
+  ## EVERY DAY FOREVER AND EVER!
 
   # Find the texture of the wall in the atlas
   var texEntry = ctx.worldAtlas.find("STARTAN3")
@@ -234,6 +234,32 @@ proc addWall*(ctx: var RenderContext, x1, y1, z1, x2, y2, z2: float32) =
   ctx.worldInds.add(off + 2)
   ctx.worldInds.add(off + 3)
   ctx.worldInds.add(off + 0)
+
+proc addFlatTessellation*(ctx: var RenderContext, verts: seq[float32], inds: seq[int32], z: float32) =
+  ## Add a flat floor or ceiling tessellation to the set of things to render
+
+  # Find the texture of the wall in the atlas
+  var texEntry = ctx.worldAtlas.find("FLOOR4_8")
+  var ua1 = texEntry.xPos.GLfloat / ctx.worldAtlas.length.GLfloat
+  var va1 = texEntry.yPos.GLfloat / ctx.worldAtlas.length.GLfloat
+  var ua2 = GLfloat(texEntry.xPos + texEntry.texture.width) / ctx.worldAtlas.length.GLfloat
+  var va2 = GLfloat(texEntry.yPos + texEntry.texture.height) / ctx.worldAtlas.length.GLfloat
+
+  var ut1 = 0.0
+  var vt1 = 0.0
+  var ut2 = 1.0
+  var vt2 = 1.0
+
+  # Draw the triangle into the buffers.
+  var off = len(ctx.worldVerts).GLuint
+
+  for i in countup(0, verts.len - 1, 2):
+    ctx.worldVerts.add(Vertex(x: verts[i].GLfloat, y: verts[i+1].GLfloat, z: z.GLfloat,
+      uAtOrigin: ua1, vAtOrigin: va1, uAtLen: ua2 - ua1, vAtLen: va2 - va1,
+      uTex: ut1, vTex: vt2))
+
+  for ind in inds:
+    ctx.worldInds.add(off + ind.GLuint)
 
 proc bakeAtlas*(ctx: var RenderContext, textures: Atlas) =
   # Copy the texture atlas into the render context

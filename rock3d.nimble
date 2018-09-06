@@ -10,7 +10,8 @@ bin = @["rock3d", "rocked"]
 
 # Dependencies
 
-requires "nim >= 0.18.0", "glm", "nimPNG", "opengl", "sdl2"
+requires "nim >= 0.18.0", "glm", "nimPNG", "opengl", "sdl2",
+  "https://github.com/genotrance/nimtess2.git"
 
 # Tasks
 

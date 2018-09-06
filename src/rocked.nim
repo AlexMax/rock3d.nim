@@ -113,6 +113,49 @@ for index, line in level.demo.lines:
         line.v2.x.float32, line.v2.y.float32, line.back.sector.floorHeight.float32,
         line.v1.x.float32, line.v1.y.float32, line.front.sector.floorHeight.float32)
 
+import nimtess2/tesselator
+
+var tessData: seq[float32] = @[]
+
+for sector in level.demo.sectors:
+  echo " == Sector == "
+  tessData.setLen(0)
+  for side in sector.sideCache:
+    echo &"{side.lineCache.v1.x}, {side.lineCache.v1.y} -> " &
+      &"{side.lineCache.v2.x}, {side.lineCache.v2.y}"
+    tessData.add(side.lineCache.v1.y.float32)
+    tessData.add(side.lineCache.v1.x.float32)
+
+import algorithm
+
+tessData.reverse
+
+var tess = tessNewTess(nil)
+
+tess.tessAddContour(2, addr tessData[0], sizeof(float32) * 2, tessData.len.cint)
+var ok = tess.tessTesselate(TESS_WINDING_ODD.cint, TESS_POLYGONS.cint, 3, 2, nil)
+
+echo $ok
+
+var vertCount = tess.tessGetVertexCount()
+var verts = cast[ptr UncheckedArray[TESSreal]](tess.tessGetVertices())
+
+var eleCount = tess.tessGetElementCount()
+var eles = cast[ptr UncheckedArray[TESSindex]](tess.tessGetElements())
+
+var vertSeq: seq[float32] = @[]
+var indSeq: seq[int32] = @[]
+
+for i in countup(0, vertCount * 2 - 1):
+  vertSeq.add(verts[i])
+
+for i in countup(0, eleCount * 3 - 1):
+  indSeq.add(eles[i])
+
+renderer.addFlatTessellation(vertSeq, indSeq, 32)
+
+tess.tessDeleteTess()
+
 # Create a camera actor
 var cam = Actor(
   pos: vec3[float](0, 448, 0),

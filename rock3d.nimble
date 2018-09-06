@@ -17,6 +17,6 @@ requires "nim >= 0.18.0", "glm", "nimPNG", "opengl", "sdl2",
 
 task clean, "Clean up the tree":
   for b in bin:
-    rmFile(b)
+    rmFile(toExe(b))
 
   rmDir("src/nimcache")

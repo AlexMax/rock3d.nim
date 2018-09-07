@@ -174,7 +174,7 @@ proc newRenderContext*(): RenderContext =
 
   opengl.loadExtensions()
 
-  #glEnable(GL_CULL_FACE)
+  glEnable(GL_CULL_FACE)
   #glPolygonMode( GL_FRONT_AND_BACK, GL_LINE )
 
   glEnable(GL_DEPTH_TEST)
@@ -185,17 +185,14 @@ proc newRenderContext*(): RenderContext =
 
   return ctx
 
-proc addWall*(ctx: var RenderContext, x1, y1, z1, x2, y2, z2: float32) =
+proc addWall*(ctx: var RenderContext, x1, y1, z1, x2, y2, z2: float32, tex: string) =
   ## Add a wall to the set of things to render
   ##
   ## Note that we need a working texture atlas at this point, otherwise
   ## we have no clue what the texture coordinates need to be.
-  ##
-  ## ...not that it matters because we're rendering STARTAN3 BABY, ALL DAY
-  ## EVERY DAY FOREVER AND EVER!
 
   # Find the texture of the wall in the atlas
-  var texEntry = ctx.worldAtlas.find("STARTAN3")
+  var texEntry = ctx.worldAtlas.find(tex)
   var ua1 = texEntry.xPos.GLfloat / ctx.worldAtlas.length.GLfloat
   var va1 = texEntry.yPos.GLfloat / ctx.worldAtlas.length.GLfloat
   var ua2 = GLfloat(texEntry.xPos + texEntry.texture.width) / ctx.worldAtlas.length.GLfloat
@@ -235,11 +232,12 @@ proc addWall*(ctx: var RenderContext, x1, y1, z1, x2, y2, z2: float32) =
   ctx.worldInds.add(off + 3)
   ctx.worldInds.add(off + 0)
 
-proc addFlatTessellation*(ctx: var RenderContext, verts: seq[float32], inds: seq[int32], z: float32) =
+proc addFlatTessellation*(ctx: var RenderContext, verts: seq[float32], inds: seq[int32],
+                          z: float32, tex: string) =
   ## Add a flat floor or ceiling tessellation to the set of things to render
 
   # Find the texture of the wall in the atlas
-  var texEntry = ctx.worldAtlas.find("FLOOR4_8")
+  var texEntry = ctx.worldAtlas.find(tex)
   var ua1 = texEntry.xPos.GLfloat / ctx.worldAtlas.length.GLfloat
   var va1 = texEntry.yPos.GLfloat / ctx.worldAtlas.length.GLfloat
   var ua2 = GLfloat(texEntry.xPos + texEntry.texture.width) / ctx.worldAtlas.length.GLfloat

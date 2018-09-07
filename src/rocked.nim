@@ -87,31 +87,36 @@ for index, line in level.demo.lines:
     # Single-sided line
     renderer.addWall(
       line.v1.x.float32, line.v1.y.float32, line.front.sector.floorHeight.float32,
-      line.v2.x.float32, line.v2.y.float32, line.front.sector.ceilHeight.float32)
+      line.v2.x.float32, line.v2.y.float32, line.front.sector.ceilHeight.float32,
+      "STARTAN3")
   else:
     # Double-sided line, upper wall
     if (line.front.sector.ceilHeight > line.back.sector.ceilHeight):
       # Draw on the front side of the line
       renderer.addWall(
         line.v1.x.float32, line.v1.y.float32, line.back.sector.ceilHeight.float32,
-        line.v2.x.float32, line.v2.y.float32, line.front.sector.ceilHeight.float32)
+        line.v2.x.float32, line.v2.y.float32, line.front.sector.ceilHeight.float32,
+        "STARTAN3")
     elif (line.back.sector.ceilHeight > line.front.sector.ceilHeight):
       # Draw on the back side of the line
       renderer.addWall(
         line.v2.x.float32, line.v2.y.float32, line.front.sector.ceilHeight.float32,
-        line.v1.x.float32, line.v1.y.float32, line.back.sector.ceilHeight.float32)
+        line.v1.x.float32, line.v1.y.float32, line.back.sector.ceilHeight.float32,
+        "STARTAN3")
 
     # Double-sided line, lower wall
     if (line.front.sector.floorHeight < line.back.sector.floorHeight):
       # Draw on the front side of the line
       renderer.addWall(
         line.v1.x.float32, line.v1.y.float32, line.front.sector.floorHeight.float32,
-        line.v2.x.float32, line.v2.y.float32, line.back.sector.floorHeight.float32)
+        line.v2.x.float32, line.v2.y.float32, line.back.sector.floorHeight.float32,
+        "STARTAN3")
     elif (line.back.sector.floorHeight < line.front.sector.floorHeight):
       # Draw on the back side of the line
       renderer.addWall(
         line.v2.x.float32, line.v2.y.float32, line.back.sector.floorHeight.float32,
-        line.v1.x.float32, line.v1.y.float32, line.front.sector.floorHeight.float32)
+        line.v1.x.float32, line.v1.y.float32, line.front.sector.floorHeight.float32,
+        "STARTAN3")
 
 import geo
 import nimtess2/tesselator
@@ -139,6 +144,7 @@ for sector in level.demo.sectors:
 
   var vertSeq: seq[float32] = @[]
   var indSeq: seq[int32] = @[]
+  var cindSeq: seq[int32] = @[]
 
   for i in countup(0, vertCount * 2 - 1):
     vertSeq.add(verts[i])
@@ -146,7 +152,13 @@ for sector in level.demo.sectors:
   for i in countup(0, eleCount * 3 - 1):
     indSeq.add(eles[i])
 
-  renderer.addFlatTessellation(vertSeq, indSeq, sector.floorHeight.float32)
+  for i in countup(0, eleCount * 3 - 1, 3):
+    cindSeq.add(eles[i+2])
+    cindSeq.add(eles[i+1])
+    cindSeq.add(eles[i])
+
+  renderer.addFlatTessellation(vertSeq, indSeq, sector.floorHeight.float32, "FLOOR4_8")
+  renderer.addFlatTessellation(vertSeq, cindSeq, sector.ceilHeight.float32, "RROCK18")
 
   tess.tessDeleteTess()
 

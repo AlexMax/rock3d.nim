@@ -17,13 +17,15 @@
 #    misrepresented as being the original software.
 # 3. This notice may not be removed or altered from any source distribution.
 
+import glm
+
 type
   Vertex = ref object
     ## A single point in the map.
     x*: int32
     y*: int32
     lineCache*: seq[Line]
-  Sector = ref object
+  Sector* = ref object
     ## A room.
     ##
     ## In a software renderer, these rooms are "projected" from the walls.

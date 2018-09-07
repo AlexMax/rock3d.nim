@@ -245,18 +245,16 @@ proc addFlatTessellation*(ctx: var RenderContext, verts: seq[float32], inds: seq
   var ua2 = GLfloat(texEntry.xPos + texEntry.texture.width) / ctx.worldAtlas.length.GLfloat
   var va2 = GLfloat(texEntry.yPos + texEntry.texture.height) / ctx.worldAtlas.length.GLfloat
 
-  var ut1 = 0.0
-  var vt1 = 0.0
-  var ut2 = 1.0
-  var vt2 = 1.0
-
   # Draw the triangle into the buffers.
   var off = len(ctx.worldVerts).GLuint
 
   for i in countup(0, verts.len - 1, 2):
+    var ut = verts[i].GLfloat / texEntry.texture.width.GLfloat
+    var vt = -(verts[i+1].GLfloat / texEntry.texture.height.GLfloat)
+
     ctx.worldVerts.add(Vertex(x: verts[i].GLfloat, y: verts[i+1].GLfloat, z: z.GLfloat,
       uAtOrigin: ua1, vAtOrigin: va1, uAtLen: ua2 - ua1, vAtLen: va2 - va1,
-      uTex: ut1, vTex: vt2))
+      uTex: ut, vTex: vt))
 
   for ind in inds:
     ctx.worldInds.add(off + ind.GLuint)

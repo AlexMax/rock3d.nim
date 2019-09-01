@@ -1,3 +1,5 @@
+**NOTE: I have halted work on this version of the engine, as I have rewritten and continued development of it in TypeScript.  Please see [this repository](https://github.com/AlexMax/rock3d.js/) for all future development.**
+
 # ROCK3D
 
 *"Let's Rock" -Duke Nukem*
